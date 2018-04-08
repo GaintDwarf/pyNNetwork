@@ -686,22 +686,25 @@ int NNetwork::evaluate(py::list inputs, py::list outputs)
 NNetwork::NNetwork(char *fileName) {
 	// openning the file
 	FILE* fl = fopen(fileName, "r");
-	fscanf(fl, "size: %d\n", size);
+	fscanf(fl, "size: %d\n", &size);
 
 	layers = new int[size];
 
 	for (int i = 0; i < size; i++)
 	{
-		fscanf(fl, "%d, ", layers[i]);
+		fscanf(fl, "%d, ", &layers[i]);
 	}
 	fscanf(fl, "\n");
 
+	this->wights = new Matrix*[(size - 1)];
+	this->biases = new Matrix*[(size - 1)];
+
 	for (int i = 0; i < size - 1; i++)
 	{
-		fscanf(fl, "\nwights at %d:\n", i);
+		fscanf(fl, "\nwights at %d:\n", &i);
 		this->wights[i] = new Matrix(layers[i + 1], layers[i]);
 		wights[i]->readMatFromFile(fl);
-		fscanf(fl, "\nbiases at %d:\n", i);
+		fscanf(fl, "\nbiases at %d:\n", &i);
 		this->biases[i] = new Matrix(layers[i + 1], 1);
 		biases[i]->readMatFromFile(fl);
 	}
@@ -736,6 +739,12 @@ NNetwork::NNetwork(const char *fileName) {
 	}
 
 	fclose(fl);
+
+	this->activation = sigmoid;
+	this->activationPrime = sigmoidDerivative;
+
+	this->cost = quadricCost;
+	this->costDerivative = quadricDerivative;
 }
 
 void NNetwork::saveNetworkTxt(const char *fileName) {
@@ -757,4 +766,10 @@ void NNetwork::saveNetworkTxt(const char *fileName) {
 	}
 
 	fclose(fl);
+
+	this->activation = sigmoid;
+	this->activationPrime = sigmoidDerivative;
+
+	this->cost = quadricCost;
+	this->costDerivative = quadricDerivative;
 }
