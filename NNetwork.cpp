@@ -405,7 +405,6 @@ void NNetwork::backpropagate(Array input, Array output,
 	// initiate the first layer
 	last = new Matrix(input.arr, input.length);
 	non_activated_layers[0] = last;
-	result = last->map(this->activation);
 	activated_layers[0] = result;
 
 	// the rest of the layers
@@ -423,7 +422,7 @@ void NNetwork::backpropagate(Array input, Array output,
 	mid = new Matrix(output.arr, output.length);			// created new matrix (not importent)
 	delta = costDerivative(result, mid);					// created new matrix (importent)
 	delete mid;
-	mid = non_activated_layers[size - 1]->map(this->activationPrime); // changed to non and added map
+	mid = non_activated_layers[size - 1]->map(this->activationPrime);
 
 	delta->hadamardSelf(mid);
 	delete mid;
@@ -478,7 +477,6 @@ void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWig
 	// initiate the first layer
 	last = new Matrix(input);
 	non_activated_layers[0] = last;
-	result = last->map(this->activation);
 	activated_layers[0] = result;
 
 	// the rest of the layers
