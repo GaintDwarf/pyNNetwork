@@ -14,7 +14,7 @@ protected:
 	// parameters
 	int size;
 	int* layers;
-	Matrix** wights;
+	Matrix** weights;
 	Matrix** biases;
 	// functions
 	double (*activation)		(double num);
@@ -45,9 +45,9 @@ public:
 	void updateBatch(Array *inputs, Array *outputs, int batchSize, double learningRate);
 	void updateBatch(py::list *inputs, py::list *outputs, int startAt, int size, double learningRate);
 	void backpropagate(Array input, Array output,
-		Matrix **deltaWights[], Matrix **deltaBiases[], int *length);
+		Matrix **deltaWeights[], Matrix **deltaBiases[], int *length);
 	void backpropagate(py::list input, py::list output,
-		Matrix **deltaWights[], Matrix **deltaBiases[], int *length);
+		Matrix **deltaWeights[], Matrix **deltaBiases[], int *length);
 	int evaluate(Array *inputs, Array *outputs, int testSize);
 	int evaluate(py::list inputs, py::list outputs);
 	// file functions

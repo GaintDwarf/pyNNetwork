@@ -111,13 +111,13 @@ NNetwork::NNetwork(int* layers, int size) {
 		this->layers[i] = layers[i];
 	}
 
-	this->wights = new Matrix*[(size - 1)];
+	this->weights = new Matrix*[(size - 1)];
 	this->biases = new Matrix*[(size - 1)];
 
 	// initiate the matrices
 	for (int i = 0; i < size - 1; i++)
 	{
-		this->wights[i] = new Matrix(layers[i + 1], layers[i]);
+		this->weights[i] = new Matrix(layers[i + 1], layers[i]);
 		this->biases[i] = new Matrix(layers[i + 1], 1);
 	}
 
@@ -139,13 +139,13 @@ NNetwork::NNetwork(py::list layers)
 		this->layers[i] = layers[i].cast<int>();
 	}
 
-	this->wights = new Matrix*[(size - 1)];
+	this->weights = new Matrix*[(size - 1)];
 	this->biases = new Matrix*[(size - 1)];
 
 	// initiate the matrices
 	for (int i = 0; i < size - 1; i++)
 	{
-		this->wights[i] = new Matrix(this->layers[i + 1], this->layers[i]);
+		this->weights[i] = new Matrix(this->layers[i + 1], this->layers[i]);
 		this->biases[i] = new Matrix(this->layers[i + 1], 1);
 	}
 
@@ -163,7 +163,7 @@ void NNetwork::RandomizeMatrices() {
 
 	for (int i = 0; i < size - 1; i++)
 	{
-		this->wights[i]->randomizePreTimeInit(-5, 5);
+		this->weights[i]->randomizePreTimeInit(-5, 5);
 		this->biases[i]->randomizePreTimeInit(-5, 5);
 	}
 
@@ -173,8 +173,8 @@ void NNetwork::printLayers() {
 
 	for (int i = 0; i < size - 1; i++)
 	{
-		std::cout << std::endl << "wights " << i + 1 << " ==> " << i + 2 << std::endl;
-		this->wights[i]->printMat();
+		std::cout << std::endl << "weights " << i + 1 << " ==> " << i + 2 << std::endl;
+		this->weights[i]->printMat();
 	}
 
 }
@@ -184,10 +184,10 @@ void NNetwork::freelayers() {
 	// initiate the matrices
 	for (int i = 0; i < size - 1; i++)
 	{
-		delete this->wights[i];
+		delete this->weights[i];
 		delete this->biases[i];
 	}
-	delete[] this->wights;
+	delete[] this->weights;
 	delete[] this->biases;
 
 	delete[] this->layers;
@@ -224,7 +224,7 @@ std::vector<double> NNetwork::feedforword(Array arr) {
 	// initiate the first layer
 	result = new Matrix(arr.arr, arr.length);
 
-	last = this->wights[0]->multiply(result);
+	last = this->weights[0]->multiply(result);
 	delete result;
 
 	result = last;
@@ -235,7 +235,7 @@ std::vector<double> NNetwork::feedforword(Array arr) {
 	// the rest of the layers
 	for (int i = 1; i < this->size - 1; i++)
 	{
-		last = this->wights[i]->multiply(result);
+		last = this->weights[i]->multiply(result);
 		delete result;
 		result = last;
 		result->addSelf(this->biases[i]);
@@ -259,7 +259,7 @@ std::vector<double> NNetwork::feedforword(py::list arr)
 
 	// initiate the first layer
 	result = new Matrix(arr);
-	last = this->wights[0]->multiply(result);
+	last = this->weights[0]->multiply(result);
 	delete result;
 
 	result = last;
@@ -269,7 +269,7 @@ std::vector<double> NNetwork::feedforword(py::list arr)
 	// the rest of the layers
 	for (int i = 1; i < this->size - 1; i++)
 	{
-		last = this->wights[i]->multiply(result);
+		last = this->weights[i]->multiply(result);
 		delete result;
 		result = last;
 		result->addSelf(this->biases[i]);
@@ -382,19 +382,19 @@ void NNetwork::SGradientDescent(Array *inputs, Array *outputs, int length, int b
 /// </summary>
 /// <param name="input">			The input to feed in.					</param>
 /// <param name="output">			The desired output.						</param>
-/// <param name="deltaWights">		The place to store delta of the wights.	</param>
+/// <param name="deltaWeights">		The place to store delta of the weights.</param>
 /// <param name="deltaBiases">		The place to store delta of the biases.	</param>
 /// <param name="length">			The length of the deltas.				</param>
 /// ------------------------------------------------------------------------------
 void NNetwork::backpropagate(Array input, Array output, 
-	Matrix **deltaWights[], Matrix **deltaBiases[], int *length)
+	Matrix **deltaWeights[], Matrix **deltaBiases[], int *length)
 {
 	if (input.length != this->layers[0] || output.length != this->layers[size - 1]) {
 		throw "the length of the input or output doesn't match the neural network";
 	}
 	// alloact the deltas
-	*deltaWights = new Matrix*[size - 1];
-	*deltaBiases = new Matrix*[size - 1];
+	*deltaWeights = new Matrix*[size - 1];
+	*deltaBiases  = new Matrix*[size - 1];
 	*length = (size - 1);
 
 	// feedforword
@@ -410,7 +410,7 @@ void NNetwork::backpropagate(Array input, Array output,
 	// the rest of the layers
 	for (int i = 0; i < this->size - 1; i++)
 	{
-		last = this->wights[i]->multiply(result);
+		last = this->weights[i]->multiply(result);
 		last->addSelf(this->biases[i]);
 
 		non_activated_layers[i + 1] = last;
@@ -428,7 +428,7 @@ void NNetwork::backpropagate(Array input, Array output,
 	delete mid;
 	(*deltaBiases)[size - 2] = delta;
 	trans = activated_layers[size - 2]->transpose();		// created new matrix (not importent)
-	(*deltaWights)[size - 2] = delta->multiply(trans);		// create new matrix (importent)
+	(*deltaWeights)[size - 2] = delta->multiply(trans);		// create new matrix (importent)
 	delete trans;
 
 	// beginning of the backpropagtion loop
@@ -436,7 +436,7 @@ void NNetwork::backpropagate(Array input, Array output,
 	{
 		last = non_activated_layers[layer];
 		mid = last->map(activationPrime);					// created new matrix (not importent)
-		trans = wights[layer]->transpose();					// created new matrix (not importent)
+		trans = weights[layer]->transpose();					// created new matrix (not importent)
 		last = trans->multiply(delta);						// created new matrix (not importent)
 		delete trans;
 		delta = last->hadamard(mid);						// create new matrix (imprtent)
@@ -444,7 +444,7 @@ void NNetwork::backpropagate(Array input, Array output,
 		delete mid;
 		(*deltaBiases)[layer - 1] = delta;
 		trans = activated_layers[layer - 1]->transpose();	// created new matrix (not importent)
-		(*deltaWights)[layer - 1] = delta->multiply(trans);
+		(*deltaWeights)[layer - 1] = delta->multiply(trans);
 		delete trans;
 	}
 
@@ -458,14 +458,14 @@ void NNetwork::backpropagate(Array input, Array output,
 	delete[] activated_layers;
 }
 
-void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWights[], 
+void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWeights[], 
 	Matrix ** deltaBiases[], int * length)
 {
 	if (input.size() != this->layers[0] || output.size() != this->layers[size - 1]) {
 		throw "the length of the input or output doesn't match the neural network";
 	}
 	// alloact the deltas
-	*deltaWights = new Matrix*[size - 1];
+	*deltaWeights = new Matrix*[size - 1];
 	*deltaBiases = new Matrix*[size - 1];
 	*length = (size - 1);
 
@@ -482,7 +482,7 @@ void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWig
 	// the rest of the layers
 	for (int i = 0; i < this->size - 1; i++)
 	{
-		last = this->wights[i]->multiply(result);
+		last = this->weights[i]->multiply(result);
 		last->addSelf(this->biases[i]);
 
 		non_activated_layers[i + 1] = last;
@@ -500,7 +500,7 @@ void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWig
 	delete mid;
 	(*deltaBiases)[size - 2] = delta;
 	trans = activated_layers[size - 2]->transpose();		// created new matrix (not importent)
-	(*deltaWights)[size - 2] = delta->multiply(trans);		// create new matrix (importent)
+	(*deltaWeights)[size - 2] = delta->multiply(trans);		// create new matrix (importent)
 	delete trans;
 
 	// beginning of the backpropagtion loop
@@ -508,7 +508,7 @@ void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWig
 	{
 		last = non_activated_layers[layer];
 		mid = last->map(activationPrime);					// created new matrix (not importent)
-		trans = wights[layer]->transpose();					// created new matrix (not importent)
+		trans = weights[layer]->transpose();					// created new matrix (not importent)
 		last = trans->multiply(delta);						// created new matrix (not importent)
 		delete trans;
 		delta = last->hadamard(mid);						// create new matrix (imprtent)
@@ -516,7 +516,7 @@ void NNetwork::backpropagate(py::list input, py::list output, Matrix ** deltaWig
 		delete mid;
 		(*deltaBiases)[layer - 1] = delta;
 		trans = activated_layers[layer - 1]->transpose();	// created new matrix (not importent)
-		(*deltaWights)[layer - 1] = delta->multiply(trans);
+		(*deltaWeights)[layer - 1] = delta->multiply(trans);
 		delete trans;
 	}
 
@@ -549,9 +549,9 @@ void NNetwork::updateBatch(Array *inputs, Array *outputs, int batchSize, double 
 	if (batchSize > 0) {
 		int changedLength;
 
-		Matrix **deltaWights;
+		Matrix **deltaWeights;
 		Matrix **deltaBiases;
-		this->backpropagate(inputs[0], outputs[0], &deltaWights, &deltaBiases, &changedLength);
+		this->backpropagate(inputs[0], outputs[0], &deltaWeights, &deltaBiases, &changedLength);
 
 		Matrix **tempWDelta;
 		Matrix **tempBDelta;
@@ -562,7 +562,7 @@ void NNetwork::updateBatch(Array *inputs, Array *outputs, int batchSize, double 
 			this->backpropagate(inputs[i], outputs[i], &tempWDelta, &tempBDelta, &changedLength);
 			for (int j = 0; j < changedLength; j++)
 			{
-				deltaWights[j]->addSelf(tempWDelta[j]);
+				deltaWeights[j]->addSelf(tempWDelta[j]);
 				deltaBiases[j]->addSelf(tempBDelta[j]);
 				delete tempWDelta[j];
 				delete tempBDelta[j];
@@ -571,22 +571,22 @@ void NNetwork::updateBatch(Array *inputs, Array *outputs, int batchSize, double 
 			delete[] tempBDelta;
 		}
 
-		// update the wights and biases
+		// update the weights and biases
 		for (int i = 0; i < this->size - 1; i++)
 		{
-			deltaWights[i]->multiplySelf(learningRate / 100.0);
+			deltaWeights[i]->multiplySelf(learningRate / 100.0);
 			deltaBiases[i]->multiplySelf(learningRate / 100.0);
 
-			wights[i]->subSelf(deltaWights[i]);
+			weights[i]->subSelf(deltaWeights[i]);
 			biases[i]->subSelf(deltaBiases[i]);
 			// cleanup
-			delete deltaWights[i];
+			delete deltaWeights[i];
 			delete deltaBiases[i];
 		}
 
 		// cleanup
 		delete[] deltaBiases;
-		delete[] deltaWights;
+		delete[] deltaWeights;
 	}
 }
 
@@ -595,9 +595,9 @@ void NNetwork::updateBatch(py::list *inputs, py::list *outputs, int startAt, int
 	if (size > 0) {
 		int changedLength;
 
-		Matrix **deltaWights;
+		Matrix **deltaWeights;
 		Matrix **deltaBiases;
-		this->backpropagate((*inputs)[startAt], (*outputs)[startAt], &deltaWights, &deltaBiases, &changedLength);
+		this->backpropagate((*inputs)[startAt], (*outputs)[startAt], &deltaWeights, &deltaBiases, &changedLength);
 
 		Matrix **tempWDelta;
 		Matrix **tempBDelta;
@@ -608,7 +608,7 @@ void NNetwork::updateBatch(py::list *inputs, py::list *outputs, int startAt, int
 			this->backpropagate((*inputs)[i], (*outputs)[i], &tempWDelta, &tempBDelta, &changedLength);
 			for (int j = 0; j < changedLength; j++)
 			{
-				deltaWights[j]->addSelf(tempWDelta[j]);
+				deltaWeights[j]->addSelf(tempWDelta[j]);
 				deltaBiases[j]->addSelf(tempBDelta[j]);
 				delete tempWDelta[j];
 				delete tempBDelta[j];
@@ -617,22 +617,22 @@ void NNetwork::updateBatch(py::list *inputs, py::list *outputs, int startAt, int
 			delete[] tempBDelta;
 		}
 
-		// update the wights and biases
+		// update the weights and biases
 		for (int i = 0; i < this->size - 1; i++)
 		{
-			deltaWights[i]->multiplySelf(learningRate / 100.0);
+			deltaWeights[i]->multiplySelf(learningRate / 100.0);
 			deltaBiases[i]->multiplySelf(learningRate / 100.0);
 
-			wights[i]->subSelf(deltaWights[i]);
+			weights[i]->subSelf(deltaWeights[i]);
 			biases[i]->subSelf(deltaBiases[i]);
 			// cleanup
-			delete deltaWights[i];
+			delete deltaWeights[i];
 			delete deltaBiases[i];
 		}
 
 		// cleanup
 		delete[] deltaBiases;
-		delete[] deltaWights;
+		delete[] deltaWeights;
 	}
 }
 
@@ -694,14 +694,14 @@ NNetwork::NNetwork(char *fileName) {
 	}
 	fscanf(fl, "\n");
 
-	this->wights = new Matrix*[(size - 1)];
-	this->biases = new Matrix*[(size - 1)];
+	this->weights = new Matrix*[(size - 1)];
+	this->biases  = new Matrix*[(size - 1)];
 
 	for (int i = 0; i < size - 1; i++)
 	{
-		fscanf(fl, "\nwights at %d:\n", &i);
-		this->wights[i] = new Matrix(layers[i + 1], layers[i]);
-		wights[i]->readMatFromFile(fl);
+		fscanf(fl, "\nweights at %d:\n", &i);
+		this->weights[i] = new Matrix(layers[i + 1], layers[i]);
+		weights[i]->readMatFromFile(fl);
 		fscanf(fl, "\nbiases at %d:\n", &i);
 		this->biases[i] = new Matrix(layers[i + 1], 1);
 		biases[i]->readMatFromFile(fl);
@@ -723,14 +723,14 @@ NNetwork::NNetwork(const char *fileName) {
 	}
 	fscanf(fl, "\n");
 
-	this->wights = new Matrix*[(size - 1)];
+	this->weights = new Matrix*[(size - 1)];
 	this->biases = new Matrix*[(size - 1)];
 
 	for (int i = 0; i < size - 1; i++)
 	{
-		fscanf(fl, "\nwights at %d:\n", &i);
-		this->wights[i] = new Matrix(layers[i + 1], layers[i]);
-		wights[i]->readMatFromFile(fl);
+		fscanf(fl, "\nweights at %d:\n", &i);
+		this->weights[i] = new Matrix(layers[i + 1], layers[i]);
+		weights[i]->readMatFromFile(fl);
 		fscanf(fl, "\nbiases at %d:\n", &i);
 		this->biases[i] = new Matrix(layers[i + 1], 1);
 		biases[i]->readMatFromFile(fl);
@@ -757,8 +757,8 @@ void NNetwork::saveNetworkTxt(const char *fileName) {
 
 	for (int i = 0; i < size - 1; i++)
 	{
-		fprintf(fl, "\nwights at %d:\n", i);
-		wights[i]->printMatToFile(fl);
+		fprintf(fl, "\nweights at %d:\n", i);
+		weights[i]->printMatToFile(fl);
 		fprintf(fl, "\nbiases at %d:\n", i);
 		biases[i]->printMatToFile(fl);
 	}
